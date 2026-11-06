@@ -1,0 +1,27 @@
+{
+  "_leia": "Ficha-modelo do kit. Não use como está: troque marca, assunto, feeds, fontes aceitas e a regra de pauta pelo SEU nicho (ou crie o canal pelo painel). Veja docs/GLOSSARIO.md e docs/curso/02-nicho-e-canal.md.",
+  "brand": {
+    "name": "Canal Exemplo",
+    "handle": "@canal.exemplo",
+    "short": "CANAL EXEMPLO",
+    "tagline": "Notícias de tecnologia todos os dias"
+  },
+  "perfil": "Voce e o editor do Canal Exemplo, reels de noticia de tecnologia em PT-BR.",
+  "regra1": "1. Escolha UMA noticia dos CANDIDATOS (ultimas 36 h) sobre tecnologia. Prefira fato novo e concreto (lancamento, preco, numero, mudanca de produto) que interesse ao publico do canal. Evite opiniao, rumor, vazamento, processo judicial sem decisao, e qualquer coisa parecida com os JA PUBLICADOS OU DESCARTADOS da mensagem (mesmo assunto com outra manchete conta como repetido).",
+  "caption_cta": "Noticias de tecnologia todos os dias -> siga o canal",
+  "titulo_exemplos": "\"<protagonista da noticia>: <a novidade concreta em poucas palavras>\"",
+  "cta": "[warm] Curtiu? Segue o canal, que todo dia tem notícia nova.",
+  "voice_id": "",
+  "estilos": ["vidro"],
+  "redes": ["youtube"],
+  "prioridade": null,
+  "feeds": {
+    "The Verge": "https://www.theverge.com/rss/index.xml",
+    "g1 Tecnologia": "https://g1.globo.com/rss/g1/tecnologia/"
+  },
+  "dominios": ["theverge.com", "g1.globo.com"],
+  "so_pauta": [],
+  "oficiais": [],
+  "agenda": "",
+  "publicar": false
+}

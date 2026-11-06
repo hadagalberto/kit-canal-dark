@@ -1,0 +1,52 @@
+# Canal dark num PC só. Três serviços, uma imagem:
+#   agendador  o Tito: roda cada canal no turno da ficha (ou pelo botão do painel)
+#   painel     Fábrica de reels em http://127.0.0.1:8787
+#   worker     rodada avulsa: docker compose run --rm worker [--exemplo|--until pauta|...]
+#
+# Dados (banco, voz, rascunhos, logins das redes) ficam no volume "dados".
+# Os MP4 prontos aparecem na pasta ./saida do Windows.
+
+x-base: &base
+  build:
+    context: .
+    args:
+      INSTALAR_INSTAGRAM: ${INSTALAR_INSTAGRAM:-0}
+  image: canal-dark-kit:latest
+  env_file:
+    - path: .env
+      required: false
+  volumes:
+    - dados:/dados
+    - ./saida:/saida
+
+services:
+  agendador:
+    <<: *base
+    command: ["python", "-m", "agendador.agendador"]
+    restart: unless-stopped
+    # Chrome headless quebra com o /dev/shm padrão de 64 MB em quadros 1080x1920
+    shm_size: 1gb
+    mem_limit: ${LIMITE_MEMORIA:-6g}
+    cpus: ${LIMITE_CPUS:-4}
+
+  painel:
+    <<: *base
+    command: ["python", "-m", "painel.servidor"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PAINEL_PORTA:-8787}:8787"   # só no seu PC, nunca na rede
+    mem_limit: 256m
+
+  worker:
+    <<: *base
+    profiles: ["manual"]   # não sobe no "up": só com docker compose run
+    entrypoint: ["/usr/bin/tini", "--", "python", "-m", "pipeline.rodada"]
+    command: []
+    shm_size: 1gb
+    mem_limit: ${LIMITE_MEMORIA:-6g}
+    cpus: ${LIMITE_CPUS:-4}
+    ports:
+      - "127.0.0.1:8090:8090"   # só para a autorização do YouTube (--service-ports)
+
+volumes:
+  dados:

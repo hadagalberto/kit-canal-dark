@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fábrica de Reels</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: um andar de fábrica por canal; mesas da esteira em ordem real do pipeline, painel de rodada e de números embaixo. Visual único, escuro, de arcade. */
+:root {
+  --chao: #0d1024;        /* fundo da fábrica */
+  --andar: #151a38;       /* piso de cada canal */
+  --mesa: #2a3060;        /* tampo das mesas */
+  --mesa-frente: #1d2248;
+  --linha: #2b3268;
+  --texto: #e9eaff;
+  --apagado: #8a90c4;
+  --destaque: #ffd23f;    /* amarelo do selo, o único acento */
+  --ok: #3ddc84;
+  --ruim: #ff5470;
+  --aviso: #ffb547;
+  --tela: #0a0c1c;
+  --f-display: "Pixelify Sans", "Courier New", monospace;
+  --f-dado: "IBM Plex Mono", "Consolas", monospace;
+  --f-texto: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--chao); color: var(--texto); }
+body {
+  margin: 0; font: 15px/1.45 var(--f-texto);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+  background-image:
+    linear-gradient(var(--linha) 1px, transparent 1px),
+    linear-gradient(90deg, var(--linha) 1px, transparent 1px);
+  background-size: 32px 32px; background-position: -1px -1px;
+  background-color: var(--chao);
+}
+body::after { /* escurece a grade para ela ficar só de textura */
+  content: ""; position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 0%, transparent 0%, var(--chao) 75%); opacity: .85; pointer-events: none; z-index: -1;
+}
+.pagina { max-width: 1240px; margin: 0 auto; display: grid; gap: 28px; position: relative; }
+a { color: var(--destaque); }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
+
+/* ---------- topo */
+.topo { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.marca { display: flex; align-items: center; gap: 12px; }
+.marca svg { width: 44px; height: 44px; image-rendering: pixelated; }
+.marca h1 { margin: 0; font: 700 28px/1 var(--f-display); letter-spacing: .02em; }
+.marca h1 span { color: var(--destaque); }
+.marca p { margin: 2px 0 0; color: var(--apagado); font-size: 13px; }
+.topo .conexao { margin-left: auto; display: flex; align-items: center; gap: 10px; font: 14px/1 var(--f-dado); color: var(--apagado); }
+.luz { width: 10px; height: 10px; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.luz.ruim { background: var(--ruim); box-shadow: 0 0 8px var(--ruim); }
+.luz.espera { background: var(--aviso); box-shadow: 0 0 8px var(--aviso); }
+button.pixel {
+  font: 700 13px/1 var(--f-texto); letter-spacing: .06em; text-transform: uppercase;
+  background: var(--mesa); color: var(--texto); border: 0; padding: 9px 12px; cursor: pointer;
+  box-shadow: inset -3px -3px 0 var(--mesa-frente), inset 3px 3px 0 #3a4280;
+}
+button.pixel:hover { background: #343b74; }
+button.pixel:active { box-shadow: inset 3px 3px 0 var(--mesa-frente); }
+button.pixel:disabled { opacity: .45; cursor: not-allowed; }
+button.pixel.rodar { background: #173a2b; color: var(--ok); }
+button.pixel.rodar:hover:not(:disabled) { background: #1f4d39; }
+button.pixel.rodar.armado { background: var(--destaque); color: #1a1530; box-shadow: inset -3px -3px 0 #b8941f, inset 3px 3px 0 #fff0a8; }
+.rodar-msg { flex-basis: 100%; font: 14px/1.2 var(--f-dado); color: var(--apagado); }
+.rodar-msg.ok { color: var(--ok); }
+.rodar-msg.ruim { color: var(--ruim); }
+.aviso-erro { background: #3a1424; border-left: 4px solid var(--ruim); padding: 10px 14px; font-size: 14px; }
+
+/* ---------- andar (canal) */
+.andar { background: var(--andar); padding: 18px 18px 22px; display: grid; gap: 18px;
+  box-shadow: 0 0 0 3px var(--linha), 0 0 0 6px var(--chao), 0 0 0 9px var(--linha); }
+.andar-topo { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline; }
+.andar-topo h2 { margin: 0; font: 700 22px/1.1 var(--f-texto); }
+.andar-topo .sub { color: var(--apagado); font: 14px/1 var(--f-dado); }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 700 12.5px/1 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; padding: 6px 8px; background: var(--mesa); }
+.chip.rodando { background: var(--destaque); color: #1a1530; }
+.chip.pausado { background: var(--ruim); color: #1a0a10; }
+.chip.ok { background: #173a2b; color: var(--ok); }
+.chip.ruim { background: #3a1424; color: var(--ruim); }
+.chip.aviso { background: #3a2c12; color: var(--aviso); }
+.proxima { margin-left: auto; font: 16px/1 var(--f-dado); color: var(--apagado); }
+.proxima b { color: var(--texto); font-weight: 400; }
+
+/* ---------- esteira */
+.esteira-rolo { overflow-x: auto; padding-bottom: 6px; scrollbar-color: var(--mesa) transparent; }
+.esteira { min-width: 860px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; position: relative; }
+.mesa { display: grid; justify-items: center; gap: 6px; position: relative; padding-top: 22px; }
+.mesa svg.estacao { width: 100%; max-width: 150px; height: auto; image-rendering: pixelated; shape-rendering: crispEdges; display: block; }
+.mesa .rotulo { font: 700 12.5px/1.2 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--apagado); text-align: center; }
+.mesa .rotulo .n { font: 14px/0 var(--f-dado); margin-right: 3px; vertical-align: -1px; }
+.mesa .faz { font: 13px/1 var(--f-dado); color: var(--apagado); opacity: .8; text-align: center; min-height: 1em; }
+.mesa .piso { width: 86%; height: 5px; background: var(--linha); }
+.mesa.feita .piso { background: var(--ok); }
+.mesa.ativa .piso { background: var(--destaque); }
+.mesa.falhou .piso { background: var(--ruim); }
+.mesa.parou .piso { background: var(--aviso); }
+.mesa.feita .rotulo { color: var(--texto); }
+.mesa.ativa .rotulo { color: var(--destaque); }
+.mesa.parada svg.estacao { opacity: .5; filter: saturate(.55); }
+.selo { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; image-rendering: pixelated; }
+.mesa.ativa .robo { animation: bate .5s steps(2) infinite; }
+.mesa.ativa .tela-luz { animation: pisca .8s steps(2) infinite; }
+.mesa.ativa .faisca { animation: sobe 1.2s steps(4) infinite; }
+.mesa.ativa .selo-ativo { animation: pulsa 1s steps(2) infinite; }
+.olho { transform-box: fill-box; transform-origin: center; }
+.mesa.ativa .olho, .mesa.feita .olho { animation: pisca-olho 3.2s steps(1) infinite; }
+.zz { font: 13px/1 var(--f-dado); fill: var(--apagado); animation: sobe-zz 2.4s steps(6) infinite; }
+@keyframes bate { 50% { transform: translateY(-1px); } }
+@keyframes pisca { 50% { opacity: .35; } }
+@keyframes sobe { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-6px); opacity: 0; } }
+@keyframes sobe-zz { from { transform: translateY(0); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(-8px); opacity: 0; } }
+@keyframes pulsa { 50% { transform: translateX(-50%) scale(1.15); } }
+@keyframes pisca-olho { 0%, 92% { transform: scaleY(1); } 94% { transform: scaleY(.2); } }
+
+.trilho { height: 10px; margin-top: 18px; min-width: 860px;
+  background: repeating-linear-gradient(90deg, #262c5a 0 12px, #1b2046 12px 24px); position: relative; }
+.rodando .trilho { animation: rola 1s linear infinite; }
+@keyframes rola { to { background-position: 24px 0; } }
+.pacote { position: absolute; top: -12px; width: 18px; height: 12px; background: var(--destaque);
+  box-shadow: inset -3px -3px 0 #c49a12, inset 0 4px 0 #ffe88a; transition: left .8s steps(8); transform: translateX(-50%); }
+
+/* ---------- painéis abaixo da esteira */
+.baixo { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 860px) { .baixo { grid-template-columns: minmax(0, 1fr); } }
+.painel { background: var(--tela); padding: 14px 16px; display: grid; gap: 12px; align-content: start; min-width: 0;
+  box-shadow: inset 0 0 0 2px var(--linha); }
+.painel h3 { margin: 0; font: 700 13px/1 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--apagado); }
+.agora-txt { font-size: 15px; }
+.agora-txt .manchete { font: 700 17px/1.3 var(--f-texto); text-wrap: balance; display: block; margin-top: 4px; }
+.motivo { color: var(--apagado); font-size: 14px; overflow-wrap: anywhere; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { font: 700 12.5px/1 var(--f-texto); letter-spacing: .06em; text-transform: uppercase; text-decoration: none; padding: 7px 9px; background: var(--mesa); color: var(--texto); }
+.links a:hover { background: #343b74; }
+.historico { display: flex; gap: 6px; flex-wrap: wrap; }
+.historico .tile { width: 52px; display: grid; gap: 3px; justify-items: center; cursor: default; }
+.historico .tile i { width: 22px; height: 22px; display: block; }
+.historico .tile span { font: 13px/1 var(--f-dado); color: var(--apagado); }
+.historico .tile[aria-current="true"] span { color: var(--texto); }
+.t-publicado i, .t-dry-run i { background: var(--ok); box-shadow: inset -4px -4px 0 #23985a; }
+.t-descartado i { background: var(--ruim); box-shadow: inset -4px -4px 0 #b83049; }
+.t-pulou i, .t-teto i { background: var(--aviso); box-shadow: inset -4px -4px 0 #b57d24; }
+.t-erro i { background: #a74bff; box-shadow: inset -4px -4px 0 #6f27b8; }
+.t-sem_resultado i { background: var(--mesa); }
+.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lista li { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; }
+.lista .hora { font: 14px/1 var(--f-dado); color: var(--apagado); }
+.lista .tit { overflow-wrap: anywhere; font-size: 14px; }
+.lista .lk { display: flex; gap: 6px; }
+.lista .lk a { font: 13px/1 var(--f-dado); text-decoration: none; }
+.vazio { color: var(--apagado); font-size: 14px; }
+
+.redes { display: grid; gap: 12px; }
+.rede { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 4px 12px; align-items: center; }
+.rede .nome { font: 700 12.5px/1.2 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; }
+.medidor { display: flex; gap: 3px; flex-wrap: wrap; align-items: center; }
+.medidor b { width: 12px; height: 14px; background: var(--mesa); display: block; }
+.medidor b.cheio { background: var(--ok); box-shadow: inset -2px -2px 0 #23985a; }
+.medidor.no-teto b.cheio { background: var(--destaque); box-shadow: inset -2px -2px 0 #c49a12; }
+.medidor .conta { font: 14px/1 var(--f-dado); margin-left: 6px; color: var(--apagado); }
+.medidor .conta strong { color: var(--texto); font-weight: 400; }
+.numeros { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 16px; font: 14px/1 var(--f-dado); color: var(--apagado); font-variant-numeric: tabular-nums; }
+.numeros strong { color: var(--texto); font-weight: 400; }
+.numeros .ganho { color: var(--ok); }
+.rodape-num { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; border-top: 2px solid var(--linha); padding-top: 12px; }
+.mini { display: grid; gap: 2px; }
+.mini small { font: 700 12.5px/1.2 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--apagado); }
+.mini span { font: 19px/1 var(--f-dado); }
+.mini em { font-style: normal; font: 13px/1.1 var(--f-dado); color: var(--apagado); }
+.nota { font-size: 12.5px; color: var(--apagado); }
+
+/* ---------- editor de ficha */
+dialog.editor { width: min(900px, 94vw); max-height: 90vh; border: 0; padding: 18px; color: var(--texto); background: var(--andar);
+  box-shadow: 0 0 0 3px var(--linha), 0 0 0 6px var(--chao), 0 0 0 9px var(--linha); }
+dialog.editor::backdrop { background: rgba(5, 6, 15, .75); }
+dialog.editor h2 { margin: 0 0 6px; font: 700 20px/1.2 var(--f-texto); }
+dialog.editor p { margin: 0 0 10px; color: var(--apagado); font: 13px/1.4 var(--f-texto); }
+dialog.editor textarea { width: 100%; height: 60vh; box-sizing: border-box; font: 13px/1.4 var(--f-dado); color: var(--texto);
+  background: var(--tela); border: 0; padding: 10px; box-shadow: inset 0 0 0 2px var(--linha); resize: vertical; }
+dialog.editor .acoes { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+dialog.editor .msg { font: 14px/1.3 var(--f-dado); } dialog.editor .msg.ok { color: var(--ok); } dialog.editor .msg.ruim { color: var(--ruim); }
+
+/* ---------- novo canal */
+.novo { background: var(--andar); padding: 18px; box-shadow: 0 0 0 3px var(--linha), 0 0 0 6px var(--chao), 0 0 0 9px var(--linha); }
+.novo summary { cursor: pointer; font: 700 22px/1.1 var(--f-texto); list-style: none; display: flex; gap: 12px; align-items: baseline; }
+.novo summary::-webkit-details-marker { display: none; }
+.novo summary .sub { color: var(--apagado); font: 14px/1 var(--f-dado); }
+.novo form { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 18px; margin-top: 16px; }
+.novo label { display: grid; gap: 6px; font: 700 12.5px/1.2 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--apagado); }
+.novo label.largo { grid-column: 1 / -1; }
+.novo label em { font: normal 13px/1.3 var(--f-texto); text-transform: none; letter-spacing: 0; color: var(--apagado); opacity: .85; }
+.novo input, .novo select, .novo textarea { font: 14px/1.3 var(--f-dado); color: var(--texto); background: var(--tela); border: 0; padding: 9px 10px; box-shadow: inset 0 0 0 2px var(--linha); min-width: 0; }
+.novo textarea { min-height: 96px; resize: vertical; }
+.novo input:focus, .novo select:focus, .novo textarea:focus { outline: 2px solid var(--destaque); outline-offset: 0; }
+.novo fieldset { grid-column: 1 / -1; border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.novo fieldset legend { font: 700 12.5px/1.2 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--apagado); margin-bottom: 8px; padding: 0; }
+.novo fieldset label { display: flex; align-items: center; gap: 6px; font: 14px/1 var(--f-dado); text-transform: none; letter-spacing: 0; color: var(--texto); }
+.novo .acoes { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.novo .msg { font: 14px/1.3 var(--f-dado); }
+.novo .msg.ok { color: var(--ok); } .novo .msg.ruim { color: var(--ruim); }
+
+/* ---------- caixa: saldos e gastos */
+.caixa { background: var(--andar); padding: 18px; display: grid; gap: 16px;
+  box-shadow: 0 0 0 3px var(--linha), 0 0 0 6px var(--chao), 0 0 0 9px var(--linha); }
+.caixa-topo { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+.caixa-topo h2 { margin: 0; font: 700 22px/1.1 var(--f-texto); }
+.caixa-topo .sub { color: var(--apagado); font: 14px/1 var(--f-dado); }
+.saldos { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.saldo { background: var(--tela); padding: 14px 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.saldo h3 { margin: 0; font: 700 13px/1 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--apagado); }
+.saldo .valor { white-space: nowrap; font: 29px/1 var(--f-dado); font-variant-numeric: tabular-nums; }
+.saldo .valor small { font-size: 15px; color: var(--apagado); }
+.saldo .valor.baixo { color: var(--aviso); }
+.saldo .valor.critico { color: var(--ruim); }
+.saldo em { font: normal 13px/1.15 var(--f-dado); color: var(--apagado); }
+.saldo .falta { font-size: 13px; color: var(--aviso); line-height: 1.4; overflow-wrap: anywhere; }
+.saldo code { font-size: 12px; background: var(--mesa); padding: 1px 4px; }
+.barra { height: 14px; background: var(--mesa); position: relative; }
+.barra i { position: absolute; inset: 0 auto 0 0; background: var(--ok); box-shadow: inset -2px -2px 0 #23985a; }
+.barra.baixo i { background: var(--aviso); box-shadow: inset -2px -2px 0 #c4851f; }
+.barra.critico i { background: var(--ruim); box-shadow: inset -2px -2px 0 #b8304a; }
+.gastos-rolo { overflow-x: auto; }
+table.gastos { width: 100%; min-width: 600px; border-collapse: collapse; background: var(--tela); font: 14px/1.1 var(--f-dado); font-variant-numeric: tabular-nums; }
+table.gastos th { font: 700 12.5px/1.2 var(--f-texto); letter-spacing: .05em; text-transform: uppercase; color: var(--apagado); text-align: right; padding: 10px 12px; border-bottom: 2px solid var(--linha); }
+table.gastos th:first-child, table.gastos td:first-child { text-align: left; }
+table.gastos td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--linha); vertical-align: top; }
+table.gastos td small { display: block; white-space: nowrap; font-size: 12.5px; color: var(--apagado); }
+table.gastos td:first-child small { white-space: normal; }
+table.gastos tr.total td { color: var(--destaque); border-bottom: 0; }
+table.gastos .teto { min-width: 160px; }
+table.gastos .teto .barra { height: 10px; margin-top: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="pagina">
+  <header class="topo">
+    <div class="marca">
+      <svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges">
+        <rect x="2" y="4" width="12" height="9" fill="#ffd23f"/><rect x="3" y="5" width="10" height="6" fill="#0a0c1c"/>
+        <rect x="5" y="7" width="2" height="2" fill="#ffd23f"/><rect x="9" y="7" width="2" height="2" fill="#ffd23f"/>
+        <rect x="7" y="1" width="2" height="3" fill="#8a90c4"/><rect x="6" y="0" width="4" height="1" fill="#ff5470"/>
+        <rect x="4" y="13" width="8" height="3" fill="#c49a12"/>
+      </svg>
+      <div>
+        <h1>Fábrica de <span>Reels</span></h1>
+        <p>Seu canal dark, rodada a rodada, direto do seu PC</p>
+      </div>
+    </div>
+    <div class="conexao">
+      <i class="luz espera" id="luz"></i>
+      <span id="conexao-txt">lendo os dados…</span>
+      <button class="pixel" id="atualizar" type="button">Atualizar</button>
+    </div>
+  </header>
+  <div class="aviso-erro" id="erro" hidden></div>
+  <main id="andares" class="pagina" style="gap:34px"></main>
+  <dialog class="editor" id="editor">
+    <h2 id="ed-titulo">Ficha do canal</h2>
+    <p>Mudanças valem na próxima volta do Tito, sem reiniciar. Campos: marca (brand), assunto e regra de pauta (perfil, regra1), feeds, fontes aceitas (dominios), voz (voice_id), estilos, redes, turno (agenda, cron), publicar (true/false) e telegram_chat_id (opcional). Detalhes em docs/GLOSSARIO.md.</p>
+    <textarea id="ed-json" spellcheck="false"></textarea>
+    <div class="acoes"><button class="pixel" type="button" id="ed-salvar">Salvar ficha</button><button class="pixel" type="button" id="ed-fechar">Fechar</button><span class="msg" id="ed-msg" role="status"></span></div>
+  </dialog>
+  <details class="novo pagina" id="novo-canal">
+    <summary>+ Novo canal <span class="sub">cria a ficha do canal em /dados/canais/&lt;id&gt;.json; nasce sem turno, só roda pelo botão</span></summary>
+    <form id="form-canal" autocomplete="off">
+      <label>Id do canal <input name="id" required maxlength="30" pattern="[a-z][a-z0-9\-]{1,29}" placeholder="futebol"><em>minúsculas, números e hífen; vira a pasta de dados</em></label>
+      <label>Nome no vídeo <input name="nome" required maxlength="40" placeholder="Canal Futebol"></label>
+      <label>@ do canal <input name="handle" maxlength="31" placeholder="@canal.futebol"></label>
+      <label>Assunto <input name="assunto" required maxlength="80" placeholder="futebol brasileiro"><em>entra no prompt: "reels de notícia de …"</em></label>
+      <label>Frase do topo <input name="frase" maxlength="60" placeholder="Notícias de futebol todos os dias"></label>
+      <label>Modelo <select name="modelo" id="nc-modelo"></select><em>de onde vêm os feeds, domínios e estilos que você não preencher</em></label>
+      <label class="largo">O que priorizar na pauta <textarea name="prioridade" maxlength="800" placeholder="Ex.: Brasileirão e seleção primeiro; depois Libertadores e mercado da bola. Rumor de transferência só dito como rumor."></textarea></label>
+      <label class="largo">Feeds RSS <textarea name="feeds" placeholder="ge | https://ge.globo.com/rss/ge/futebol/&#10;ESPN | https://www.espn.com.br/rss"></textarea><em>uma por linha, "Nome | URL" ou só a URL. Vazio = feeds do modelo. Teste depois com docker compose run --rm -e CANAL=&lt;id&gt; worker --until pauta</em></label>
+      <label class="largo">Domínios aceitos como fonte <textarea name="dominios" placeholder="ge.globo.com espn.com.br cbf.com.br"></textarea><em>só sites confiáveis: a trava da checagem descarta qualquer fonte fora desta lista. Vazio = os do modelo (obrigatório se você trocar os feeds)</em></label>
+      <label>Id da voz (ElevenLabs) <input name="voice_id" maxlength="40" placeholder="vazio = ELEVENLABS_VOICE_ID do .env"></label>
+      <label>Turno (cron) <input name="agenda" maxlength="60" placeholder="vazio = só pelo botão"><em>horários em que o Tito chama o canal, ex.: 0 9,13,18 * * *</em></label>
+      <fieldset id="nc-redes"><legend>Redes onde o canal posta</legend></fieldset>
+      <label class="largo" style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px"><input type="checkbox" name="publicar" value="1"> Publicar de verdade <em>(desmarcado = ensaio: faz o vídeo e não posta. Mesmo marcado, nada sai enquanto o .env tiver DRY_RUN=1.)</em></label>
+      <fieldset id="nc-estilos"><legend>Estilos (nenhum marcado = os do modelo)</legend></fieldset>
+      <div class="acoes"><button class="pixel" type="submit" id="nc-criar">Criar canal</button><span class="msg" id="nc-msg" role="status"></span></div>
+    </form>
+  </details>
+  <p class="nota">Cada mesa é uma estação da rodada, com o seu robô: Bento busca as notícias, Ester escreve o roteiro, Caco confere os fatos, Íris acha as imagens, Vavá grava a voz, Mila monta o vídeo e Paco posta nas redes. O Tito cuida do turno. Os números saem de <code>/dados/&lt;canal&gt;</code> (o arquivo <code>published.json</code>, <code>rodadas.jsonl</code> e <code>costs.jsonl</code>). "Rodar agora" só pede uma rodada ao Tito; publicar ou não depende do ensaio (<code>DRY_RUN</code> no .env). Nomes: <code>docs/GLOSSARIO.md</code>.</p>
+</div>
+
+<script>
+"use strict";
+const TZ = "America/Sao_Paulo";
+const ETAPAS = [
+  { nome: "Pauta",      faz: "lê os feeds",          cor: ["#3b6cff", "#2447b8", "#9fb6ff"] },
+  { nome: "Apuração",   faz: "LLM escreve",       cor: ["#8b5cf6", "#5b34b8", "#cdb6ff"] },
+  { nome: "Checagem",   faz: "LLM + código conferem",        cor: ["#ff3ea5", "#b8207a", "#ffb0d8"] },
+  { nome: "Mídia",      faz: "logo e imagem",        cor: ["#ff8a3d", "#b85a1f", "#ffc49b"] },
+  { nome: "Narração",   faz: "voz ElevenLabs",       cor: ["#ffd23f", "#c49a12", "#fff0a8"] },
+  { nome: "Render",     faz: "Remotion no PC",      cor: ["#2ee6d6", "#1a9c92", "#a8fff7"] },
+  { nome: "Publicação", faz: "redes do .env",         cor: ["#3ddc84", "#23985a", "#b2ffd2"] },
+];
+const RESULTADO = {
+  publicado: { txt: "Publicado", chip: "ok" },
+  "dry-run": { txt: "Ensaio: MP4 pronto, nada publicado", chip: "ok" },
+  descartado: { txt: "Descarte (caiu numa trava)", chip: "ruim" },
+  pulou: { txt: "Pulou: sem pauta confirmada", chip: "aviso" },
+  teto: { txt: "Teto do dia em todas as redes", chip: "aviso" },
+  erro: { txt: "Erro no script", chip: "ruim" },
+  sem_resultado: { txt: "Sem resultado no log", chip: "" },
+};
+const REDE_NOME = { instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok" };
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const num = n => (n ?? 0).toLocaleString("pt-BR");
+const hora = iso => iso ? new Date(iso).toLocaleTimeString("pt-BR", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }) : "—";
+const dataCurta = iso => iso ? new Date(iso + (iso.length === 10 ? "T12:00:00-03:00" : "")).toLocaleDateString("pt-BR", { timeZone: TZ, day: "2-digit", month: "2-digit" }) : "—";
+function duracao(s) {
+  s = Math.max(0, Math.round(s));
+  if (s < 60) return s + " s";
+  const m = Math.floor(s / 60), r = s % 60;
+  if (m < 60) return m + " min" + (r ? " " + String(r).padStart(2, "0") + " s" : "");
+  return Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0");
+}
+function titulo(id) { // 2026-10-31-macbook-pro-m6-preco -> macbook pro m6 preco
+  return String(id || "").replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/-/g, " ");
+}
+
+/* ---------- desenho das estações em pixels (SVG, 48x34) */
+function rect(x, y, w, h, c, extra = "") { return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" ${extra}/>`; }
+function estacao(i, estado) {
+  const [cor, escura, clara] = ETAPAS[i].cor;
+  const dorme = estado === "parada" || estado === "dorme";
+  const olho = estado === "falhou" ? "#ff5470" : clara;
+  let s = `<svg class="estacao" viewBox="0 0 48 34" aria-hidden="true">`;
+  // monitor
+  s += rect(2, 9, 16, 11, "#3a4280") + rect(3, 10, 14, 9, "#0a0c1c");
+  if (estado === "ativa") s += `<g class="tela-luz">${rect(4, 11, 9, 1, cor)}${rect(4, 13, 12, 1, clara)}${rect(4, 15, 7, 1, cor)}${rect(4, 17, 10, 1, clara)}</g>`;
+  else if (estado === "feita") s += rect(4, 14, 2, 2, "#3ddc84") + rect(6, 16, 2, 1, "#3ddc84") + rect(8, 13, 2, 3, "#3ddc84") + rect(10, 11, 2, 2, "#3ddc84") + rect(12, 11, 2, 1, "#3ddc84");
+  else if (estado === "falhou") s += rect(5, 11, 2, 2, "#ff5470") + rect(13, 11, 2, 2, "#ff5470") + rect(7, 13, 2, 2, "#ff5470") + rect(11, 13, 2, 2, "#ff5470") + rect(9, 14, 2, 1, "#ff5470") + rect(7, 15, 2, 2, "#ff5470") + rect(11, 15, 2, 2, "#ff5470") + rect(5, 17, 2, 1, "#ff5470") + rect(13, 17, 2, 1, "#ff5470");
+  else if (estado === "parou") s += rect(5, 14, 10, 2, "#ffb547");
+  else s += rect(4, 17, 3, 1, "#2b3268");
+  s += rect(9, 20, 2, 2, "#3a4280");
+  // robô sentado atrás da mesa
+  s += `<g class="robo">`;
+  s += rect(30, 1, 2, 2, estado === "ativa" ? "#ffd23f" : cor) + rect(30, 3, 2, 2, "#8a90c4");
+  s += rect(24, 5, 14, 10, cor) + rect(24, 5, 14, 1, clara) + rect(25, 6, 12, 8, "#0a0c1c");
+  if (dorme) s += rect(27, 10, 3, 1, clara) + rect(32, 10, 3, 1, clara);
+  else s += `<rect class="olho" x="27" y="8" width="3" height="3" fill="${olho}"/><rect class="olho" x="32" y="8" width="3" height="3" fill="${olho}"/>`;
+  if (estado === "falhou") s += rect(28, 12, 6, 1, "#ff5470");
+  else if (estado === "feita" || estado === "ativa") s += rect(28, 12, 1, 1, clara) + rect(29, 13, 4, 1, clara) + rect(33, 12, 1, 1, clara);
+  s += rect(29, 15, 4, 1, "#8a90c4") + rect(26, 16, 10, 7, escura) + rect(22, 17, 3, 5, cor) + rect(37, 17, 3, 5, cor);
+  s += `</g>`;
+  if (estado === "ativa") s += `<g class="faisca">${rect(41, 6, 2, 2, "#ffd23f")}${rect(44, 3, 1, 1, clara)}${rect(20, 4, 1, 1, clara)}</g>`;
+  if (dorme) s += `<text class="zz" x="40" y="8">z</text>`;
+  // mesa
+  s += rect(0, 22, 48, 3, "#3a4280") + rect(0, 25, 48, 7, "#1d2248") + rect(3, 27, 8, 1, "#2b3268") + rect(37, 27, 8, 1, "#2b3268");
+  s += `</svg>`;
+  return s;
+}
+function selo(tipo) {
+  const c = { feita: "#3ddc84", ativa: "#ffd23f", falhou: "#ff5470", parou: "#ffb547" }[tipo];
+  if (!c) return "";
+  let s = `<svg class="selo ${tipo === "ativa" ? "selo-ativo" : ""}" viewBox="0 0 11 11" shape-rendering="crispEdges" aria-hidden="true">`;
+  s += rect(0, 0, 11, 11, "#0a0c1c") + rect(1, 1, 9, 9, c);
+  const t = "#0a0c1c";
+  if (tipo === "feita") s += rect(2, 5, 2, 2, t) + rect(4, 6, 1, 2, t) + rect(5, 5, 1, 2, t) + rect(6, 4, 1, 2, t) + rect(7, 3, 2, 2, t);
+  else if (tipo === "falhou") s += rect(3, 3, 2, 2, t) + rect(6, 3, 2, 2, t) + rect(4, 5, 3, 1, t) + rect(3, 6, 2, 2, t) + rect(6, 6, 2, 2, t);
+  else if (tipo === "parou") s += rect(3, 5, 5, 1, t);
+  else s += rect(5, 2, 1, 5, t) + rect(5, 8, 1, 1, t);
+  return s + `</svg>`;
+}
+
+/* estado de cada mesa: rodada em andamento ou trilha da última rodada */
+function estados(canal) {
+  const ag = canal.agora;
+  if (ag) return ETAPAS.map((_, i) => i < ag.etapa ? "feita" : i === ag.etapa ? "ativa" : "parada");
+  const ult = canal.rodadas[0];
+  if (!ult) return ETAPAS.map(() => "dorme");
+  const e = Math.max(ult.etapa, 0);
+  return ETAPAS.map((_, i) => {
+    if (ult.resultado === "publicado" || ult.resultado === "dry-run") return "feita";
+    if (i < e) return "feita";
+    if (i === e) return ult.resultado === "descartado" || ult.resultado === "erro" ? "falhou" : "parou";
+    return "dorme";
+  });
+}
+
+function rotuloEtapa(canal, i) {
+  if (i === 6 && canal.dry_run) return "ensaio: só o MP4";
+  if (i === 1 && canal.motor === "exemplo") return "modo exemplo";
+  if (i === 4 && canal.motor === "exemplo") return "voz de exemplo";
+  if (i === 6 && canal.redes.instagram && canal.redes.instagram.hoje >= canal.redes.instagram.teto) return "IG no teto · YouTube";
+  return ETAPAS[i].faz;
+}
+
+/* ---------- rodar agora: dois cliques, o segundo dentro de 6 s */
+let armado = null, pedindo = null;
+const rodarMsg = {};
+function botaoRodar(canal) {
+  const job = canal.job;
+  let bloqueio = "";
+  if (!job.ligado || job.estado === "paused") bloqueio = "Tito (agendador) fora do ar: docker compose up -d";
+  else if (canal.agora) bloqueio = "já tem rodada em andamento";
+  const arm = armado && armado.canal === canal.id && armado.ate > Date.now();
+  const txt = pedindo === canal.id ? "Pedindo…" : arm ? (canal.dry_run ? "Confirmar: ensaio (não publica)" : "Confirmar: publica de verdade") : "▶ Rodar agora";
+  const m = rodarMsg[canal.id];
+  return `<button class="pixel rodar ${arm ? "armado" : ""}" data-rodar="${esc(canal.id)}" ${bloqueio || pedindo ? "disabled" : ""}
+      title="${esc(bloqueio || "Roda o pipeline inteiro fora de hora, com publicação, cap e checagem normais")}">${txt}</button>
+    ${m ? `<span class="rodar-msg ${m.ok ? "ok" : "ruim"}">${esc(m.texto)}</span>` : ""}`;
+}
+async function rodar(id) {
+  if (!armado || armado.canal !== id || armado.ate < Date.now()) {
+    armado = { canal: id, ate: Date.now() + 6000 };
+    if (ultimo) desenha(ultimo.dados);
+    setTimeout(() => { if (armado && armado.ate <= Date.now()) { armado = null; if (ultimo) desenha(ultimo.dados); } }, 6100);
+    return;
+  }
+  armado = null; pedindo = id; delete rodarMsg[id];
+  if (ultimo) desenha(ultimo.dados);
+  try {
+    const r = await fetch("rodar?canal=" + encodeURIComponent(id), { method: "POST", headers: { "X-Fabrica": "rodar" } });
+    const j = await r.json().catch(() => ({ ok: false, mensagem: "HTTP " + r.status }));
+    rodarMsg[id] = { ok: j.ok, texto: j.mensagem };
+  } catch (e) {
+    rodarMsg[id] = { ok: false, texto: "servidor local fora do ar" };
+  }
+  pedindo = null;
+  busca();
+}
+$("#andares").addEventListener("click", e => {
+  const b = e.target.closest("[data-rodar]");
+  if (b && !b.disabled) rodar(b.dataset.rodar);
+});
+
+function andar(canal) {
+  const job = canal.job, ag = canal.agora, ult = canal.rodadas[0];
+  const est = estados(canal);
+  let estadoChip;
+  if (!job.ligado || job.estado === "paused") estadoChip = `<span class="chip pausado">Tito fora do ar</span>`;
+  else if (ag) estadoChip = `<span class="chip rodando">Rodando · ${esc(ETAPAS[ag.etapa].robo || ETAPAS[ag.etapa].nome)}</span>`;
+  else estadoChip = `<span class="chip">Aguardando</span>`;
+  const prox = job.proxima && job.ligado ? `próxima rodada <b>${hora(job.proxima)}</b> · <span data-conta="${esc(job.proxima)}"></span>` : (job.ligado ? "sem turno: só pelo botão" : "Tito (agendador) fora do ar" + (job.motivo_pausa ? ": " + esc(job.motivo_pausa) : ""));
+  const pacoteEm = ag ? ((ag.etapa + .5) / 7 * 100) : null;
+
+  const mesas = ETAPAS.map((e, i) => `
+    <div class="mesa ${est[i]}" title="Estação ${i + 1} · ${esc(e.nome)}: ${esc(e.robo || "")} ${esc(e.faz)}">
+      ${selo(est[i])}
+      ${estacao(i, est[i])}
+      <div class="piso"></div>
+      <div class="rotulo"><span class="n">${i + 1}</span> ${esc(e.robo || e.nome)}</div>
+      <div class="faz">${esc(rotuloEtapa(canal, i))}</div>
+    </div>`).join("");
+
+  return `
+  <section class="andar ${ag ? "rodando" : ""}" aria-label="${esc(canal.nome)}">
+    <div class="andar-topo">
+      <h2>${esc(canal.nome)}</h2>
+      ${estadoChip}
+      <span class="sub">motor ${esc(canal.motor)} · ${canal.dry_run ? (canal.ficha_publica ? "ensaio (trava geral DRY_RUN=1)" : "ensaio") : "publica"} · turno ${esc(job.agenda || "nenhum")}</span>
+      <span class="proxima">${prox}</span>
+      ${botaoRodar(canal)}
+      ${canal.criado_no_painel ? `<button class="pixel" type="button" data-editar="${esc(canal.id)}">Editar ficha</button>` : ""}
+    </div>
+    <div class="esteira-rolo">
+      <div class="esteira">${mesas}</div>
+      <div class="trilho">${pacoteEm !== null ? `<div class="pacote" style="left:${pacoteEm}%" title="${esc(ag.manchete || ag.noticia || "notícia em produção")}"></div>` : ""}</div>
+    </div>
+    <div class="baixo">
+      ${painelRodada(canal)}
+      ${painelNumeros(canal)}
+    </div>
+  </section>`;
+}
+
+function painelRodada(canal) {
+  const ag = canal.agora, ult = canal.rodadas[0];
+  let topo;
+  if (ag) {
+    topo = `<h3>Na esteira agora</h3>
+      <div class="agora-txt">Começou às ${hora(ag.inicio)}, há ${duracao(ag.decorrido_s)}. Estação ${ag.etapa + 1} de 7: <b>${esc(ETAPAS[ag.etapa].robo || ETAPAS[ag.etapa].nome)}</b> ${esc(ETAPAS[ag.etapa].faz)}${ag.estilo ? ` · estilo ${esc(ag.estilo)}` : ""}.
+      <span class="manchete">${esc(ag.manchete || (ag.noticia ? titulo(ag.noticia) : "escolhendo a notícia…"))}</span></div>`;
+  } else if (ult) {
+    const r = RESULTADO[ult.resultado] || RESULTADO.sem_resultado;
+    topo = `<h3>Última rodada · terminou às ${hora(ult.fim)}</h3>
+      <div class="agora-txt"><span class="chip ${r.chip}">${esc(r.txt)}</span>
+      <span class="manchete">${esc(ult.noticia ? titulo(ult.noticia) : "nenhuma notícia escolhida")}</span></div>
+      ${ult.motivo ? `<div class="motivo">${esc(ult.motivo)}</div>` : ""}
+      ${ult.mp4 ? `<div class="motivo">MP4: <code>${esc(ult.mp4)}</code></div>` : ""}
+      ${Object.keys(ult.links).length ? `<div class="links">${Object.entries(ult.links).map(([k, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(REDE_NOME[k] || k)} ↗</a>`).join("")}</div>` : ""}
+      <div class="motivo">Durou ${duracao(ult.duracao_s)}${ult.imagem_ia ? " · imagem IA: " + esc(ult.imagem_ia) : ""}${ult.redes_no_teto.length ? " · no teto: " + ult.redes_no_teto.map(n => REDE_NOME[n] || n).join(", ") : ""}</div>`;
+  } else {
+    topo = `<h3>Última rodada</h3><p class="vazio">Nenhuma rodada registrada ainda.</p>`;
+  }
+  const hist = canal.rodadas.slice().reverse().map((r, i, a) => {
+    const t = (RESULTADO[r.resultado] || RESULTADO.sem_resultado).txt + (r.noticia ? ": " + titulo(r.noticia) : "") + (r.motivo ? " — " + r.motivo : "");
+    return `<div class="tile t-${esc(r.resultado)}" title="${esc(hora(r.fim) + " · " + t)}" ${i === a.length - 1 ? 'aria-current="true"' : ""}><i></i><span>${hora(r.fim)}</span></div>`;
+  }).join("");
+  const pubs = canal.publicados_hoje.length
+    ? `<ul class="lista">${canal.publicados_hoje.map(p => `<li><span class="hora">${hora(p.at)}</span><span class="tit">${esc(p.titulo || titulo(p.id))}</span><span class="lk">${Object.entries(p.links).map(([k, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener" title="${esc(REDE_NOME[k] || k)}">${k === "instagram" ? "IG" : k === "youtube" ? "YT" : "TT"}</a>`).join("")}</span></li>`).join("")}</ul>`
+    : `<p class="vazio">Nada publicado hoje ainda.</p>`;
+  return `<div class="painel">
+    ${topo}
+    <h3>Últimas ${canal.rodadas.length} rodadas</h3>
+    <div class="historico">${hist || '<span class="vazio">sem histórico</span>'}</div>
+    <h3>Publicados hoje</h3>
+    ${pubs}
+  </div>`;
+}
+
+function medidor(hoje, teto, extra = "") {
+  const n = Math.max(teto || 0, hoje || 0);
+  let b = "";
+  for (let i = 0; i < n; i++) b += `<b class="${i < hoje ? "cheio" : ""}"></b>`;
+  return `<div class="medidor ${teto && hoje >= teto ? "no-teto" : ""}">${b}<span class="conta"><strong>${hoje}</strong>/${teto ?? "—"}${extra}</span></div>`;
+}
+
+function painelNumeros(canal) {
+  const st = canal.stats.redes || {};
+  const redes = Object.entries(canal.redes).map(([k, r]) => {
+    const s = st[k] || {};
+    const estado = r.pausada ? `<span class="chip pausado" title="${esc(r.motivo_pausa)}">pausada</span>` : medidor(r.hoje, r.teto, r.hoje >= r.teto ? " · no teto" : "");
+    return `<div class="rede">
+      <span class="nome">${esc(REDE_NOME[k] || k)}</span>
+      ${estado}
+      <div class="numeros">
+        <span><strong>${num(s.views)}</strong> views <span class="ganho">+${num(s.views_hoje)}</span></span>
+        <span><strong>${num(s.likes)}</strong> curtidas <span class="ganho">+${num(s.likes_hoje)}</span></span>
+        <span>${num(s.videos)} vídeos</span>
+      </div>
+    </div>`;
+  }).join("");
+  const c = canal.custos_hoje, ia = canal.imagens_ia;
+  const top = (canal.stats.top || [])[0];
+  return `<div class="painel">
+    <h3>Publicados hoje / teto · views e curtidas totais</h3>
+    <div class="redes">${redes}</div>
+    <div class="rodape-num">
+      <div class="mini"><small>Imagens de IA hoje</small>${medidor(ia.hoje || 0, ia.teto)}</div>
+      <div class="mini"><small>Rodadas hoje</small><span>${c.rodadas}</span><em>${c.publicadas} publicadas · ${c.descartadas} descartadas · ${c.puladas} puladas</em></div>
+      <div class="mini"><small>API hoje</small><span>US$ ${c.usd.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span><em>LLM + imagens</em></div>
+      ${top ? `<div class="mini"><small>Mais visto</small><span>${num(top.views)}</span><em>${esc(titulo(top.id))} · ${esc(REDE_NOME[top.rede] || top.rede)}</em></div>` : ""}
+    </div>
+    <div class="nota">${canal.stats.leitura ? "Leitura de views de " + dataCurta(canal.stats.leitura) + "." : "Views e curtidas: a coleta de estatísticas fica para o módulo de métricas do curso."}</div>
+  </div>`;
+}
+
+/* ---------- ciclo de atualização */
+let ultimo = null, buscando = false;
+async function busca() {
+  if (buscando) return;
+  buscando = true;
+  const luz = $("#luz"), txt = $("#conexao-txt"), erro = $("#erro");
+  try {
+    const r = await fetch("status.json", { cache: "no-store" });
+    const j = await r.json();
+    if (j.dados) { ultimo = j; desenha(j.dados); }
+    if (j.ok) {
+      luz.className = "luz"; erro.hidden = true;
+      txt.textContent = "ao vivo · " + hora(j.dados.gerado_em);
+    } else {
+      luz.className = "luz ruim";
+      txt.textContent = j.dados ? "sem conexão · mostrando " + hora(j.dados.gerado_em) : "sem conexão";
+      erro.hidden = false; erro.textContent = "Não consegui ler os dados: " + j.erro;
+    }
+  } catch (e) {
+    luz.className = "luz ruim"; txt.textContent = "servidor local fora do ar";
+    erro.hidden = false;
+    erro.textContent = "O painel saiu do ar. Rode: docker compose up -d (e veja docker compose logs painel).";
+  } finally { buscando = false; }
+}
+/* ---------- caixa */
+const usd = v => v == null ? "—" : "US$ " + Number(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const brl = (v, cot) => v == null || !cot ? "" : "R$ " + (v * cot).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function barra(frac, nivel = "") {
+  const f = Math.max(0, Math.min(1, frac || 0));
+  return `<div class="barra ${nivel}"><i style="width:${(f * 100).toFixed(1)}%"></i></div>`;
+}
+function nivelResta(frac) { return frac < .1 ? "critico" : frac < .25 ? "baixo" : ""; }
+function cardEleven(e, gastoMes) {
+  if (!e || !e.ok) return `<div class="saldo"><h3>ElevenLabs · voz</h3>
+    <div class="valor">${num(gastoMes)} <small>créditos no mês</small></div>
+    <div class="falta">Saldo indisponível${e && e.erro ? ": " + esc(e.erro) : ""}.${e && e.erro && e.erro.includes("user_read") ? " Na ElevenLabs, edite a chave do .env e ligue <code>User → Read</code>." : ""}</div></div>`;
+  const resta = (e.limite || 0) - (e.usados || 0), frac = e.limite ? resta / e.limite : 0;
+  return `<div class="saldo"><h3>ElevenLabs · voz${e.plano ? " · " + esc(e.plano) : ""}</h3>
+    <div class="valor ${nivelResta(frac)}">${num(resta)} <small>créditos restantes</small></div>
+    ${barra(frac, nivelResta(frac))}
+    <em>${num(e.usados)} de ${num(e.limite)} usados${e.renova_em ? " · renova " + dataCurta(e.renova_em) : ""}</em></div>`;
+}
+function cardOpenRouter(o, cot, prov) {
+  const tit = prov === "openrouter" ? "OpenRouter · LLM e imagens" : "OpenRouter · imagens de IA";
+  if (!o || !o.ok) return `<div class="saldo"><h3>${tit}</h3><div class="falta">Saldo indisponível${o && o.erro ? ": " + esc(o.erro) : ""}.</div></div>`;
+  const total = o.fonte === "conta" ? o.comprado_usd : o.limite_usd;
+  const frac = total ? (o.restante_usd ?? 0) / total : null;
+  return `<div class="saldo"><h3>${tit}</h3>
+    <div class="valor ${frac == null ? "" : nivelResta(frac)}">${usd(o.restante_usd)} <small>restantes</small></div>
+    ${frac == null ? "" : barra(frac, nivelResta(frac))}
+    <em>${usd(o.usado_usd)} usados de ${total == null ? "sem limite" : usd(total)}${o.fonte === "chave" ? " (limite da chave)" : ""}${cot && o.restante_usd != null ? " · " + brl(o.restante_usd, cot) : ""}</em></div>`;
+}
+function cardAnthropic(a, canais, cot) {
+  const hoje = canais.reduce((t, c) => t + c.custos.hoje.llm_usd, 0);
+  const mes = canais.reduce((t, c) => t + c.custos.mes.llm_usd, 0);
+  if (a && a.ok) {
+    const frac = a.informado_usd ? a.restante_usd / a.informado_usd : 0;
+    return `<div class="saldo"><h3>Anthropic · API do LLM</h3>
+    <div class="valor ${nivelResta(frac)}">${usd(a.restante_usd)} <small>estimado</small></div>
+    ${barra(frac, nivelResta(frac))}
+    <em>${usd(a.informado_usd)} em ${dataCurta(a.em)} − ${usd(a.gasto_desde_usd)} gastos desde então · hoje ${usd(hoje)}</em></div>`;
+  }
+  return `<div class="saldo"><h3>Anthropic · API do LLM</h3>
+    <div class="valor">${usd(hoje)} <small>hoje</small></div>
+    <em>${usd(mes)} no mês${cot ? " · " + brl(mes, cot) : ""}</em>
+    <div class="falta">A API da Anthropic não informa saldo. Para estimar, ponha no <code>pipeline.json</code> do canal <code>"custos": {"anthropic_saldo": {"usd": 100, "em": "2026-11-05"}}</code> com o saldo do console.</div></div>`;
+}
+function linhaViews(nome, st, mes, cot, cls = "") {
+  const g = st.views_ganho || {}, gasto = mes.llm_usd + mes.ia_usd, cpm = g.mes ? gasto / g.mes * 1000 : null;
+  const mais = n => n == null ? "—" : "+" + num(n);
+  return `<tr class="${cls}"><td>${esc(nome)}</td><td>${num(st.views_total)}</td><td>${mais(g.hoje)}</td><td>${mais(g.semana)}</td><td>${mais(g.mes)}</td>
+    <td>${cpm == null ? "—" : usd(cpm)}${cpm != null && cot ? `<small>${brl(cpm, cot)}</small>` : ""}</td></tr>`;
+}
+function painelCaixa(d) {
+  const s = d.saldos || {}, cot = d.cotacao && d.cotacao.usd_brl, canais = d.canais;
+  const per = ["hoje", "semana", "mes"];
+  const celula = x => {
+    const t = x.llm_usd + x.ia_usd;
+    return `<td>${usd(t)}${cot ? `<small>${brl(t, cot)}</small>` : ""}<small>${num(x.creditos)} créd. voz</small></td>`;
+  };
+  const linhas = canais.map(c => {
+    const h = c.custos.hoje.llm_usd, teto = c.teto_llm_dia, frac = teto ? h / teto : 0, m = c.custos.mes;
+    return `<tr><td>${esc(c.nome)}<small>${m.publicadas} reels no mês · ${m.publicadas ? usd((m.llm_usd + m.ia_usd) / m.publicadas) + "/reel" : "—"}</small></td>
+      ${per.map(k => celula(c.custos[k])).join("")}
+      <td class="teto">${usd(h)} / ${usd(teto)}${barra(frac, frac >= .9 ? "critico" : frac >= .7 ? "baixo" : "")}</td></tr>`;
+  }).join("");
+  const soma = k => canais.reduce((t, c) => ({ llm_usd: t.llm_usd + c.custos[k].llm_usd, ia_usd: t.ia_usd + c.custos[k].ia_usd,
+    creditos: t.creditos + c.custos[k].creditos }), { llm_usd: 0, ia_usd: 0, creditos: 0 });
+  return `<section class="caixa" aria-label="Saldos e gastos">
+    <div class="caixa-topo"><h2>Caixa</h2>
+      <span class="sub">saldos às ${s.consultado_em ? hora(s.consultado_em) : "—"} (a cada 5 min)${cot ? ` · dólar R$ ${cot.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${esc(d.cotacao.fonte || "")})` : ""}</span></div>
+    <div class="saldos">
+      ${cardEleven(s.elevenlabs, canais.reduce((t, c) => t + c.custos.mes.creditos, 0))}
+      ${cardOpenRouter(s.openrouter, cot, d.provedor)}
+      ${d.provedor === "openrouter" ? "" : cardAnthropic(s.anthropic, canais, cot)}
+    </div>
+    <div class="gastos-rolo"><table class="gastos">
+      <thead><tr><th>Canal</th><th>Hoje</th><th>7 dias</th><th>Mês (desde ${dataCurta(d.hoje.slice(0, 8) + "01")})</th><th>LLM hoje / teto do dia</th></tr></thead>
+      <tbody>${linhas}
+        <tr class="total"><td>Total</td>${per.map(k => celula(soma(k))).join("")}<td></td></tr></tbody>
+    </table></div>
+    ${!canais.some(c => c.stats.leitura) ? "" : `<div class="gastos-rolo"><table class="gastos">
+      <thead><tr><th>Views (todas as redes)</th><th>Total</th><th>Hoje</th><th>7 dias</th><th>Mês</th><th>Custo por mil views no mês</th></tr></thead>
+      <tbody>${canais.map(c => linhaViews(c.nome, c.stats, c.custos.mes, cot)).join("")}
+        ${linhaViews("Total", {
+          views_total: canais.reduce((t, c) => t + (c.stats.views_total || 0), 0),
+          views_ganho: Object.fromEntries(per.map(k => [k, canais.reduce((t, c) => t + ((c.stats.views_ganho || {})[k] || 0), 0)]))
+        }, soma("mes"), cot, "total")}</tbody>
+    </table></div>`}
+    <div class="nota">US$ = LLM + imagens de IA, valores exatos do costs.jsonl. Voz em créditos da ElevenLabs. Rodadas descartadas também gastam. Dólar: PTAX do Banco Central (ou USD_BRL do .env). Views: soma da última leitura de cada reel em cada rede (stats.jsonl do canal); o ganho do período é o total menos a leitura anterior ao início dele, e o custo por mil views divide o gasto do mês pelas views ganhas no mês.</div>
+  </section>`;
+}
+
+/* ---------- novo canal: monta o formulário uma vez, com os modelos e estilos que o servidor informa */
+let formMontado = false;
+function montaForm(nc) {
+  if (formMontado || !nc) return;
+  formMontado = true;
+  $("#nc-modelo").innerHTML = nc.modelos.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join("");
+  $("#nc-redes").insertAdjacentHTML("beforeend", nc.redes.map(r => `<label><input type="checkbox" name="redes" value="${esc(r)}" ${r === "youtube" ? "checked" : ""}> ${esc(REDE_NOME[r] || r)}</label>`).join(""));
+  $("#nc-estilos").insertAdjacentHTML("beforeend", nc.estilos.map(e => `<label><input type="checkbox" name="estilos" value="${esc(e)}"> ${esc(e)}</label>`).join(""));
+}
+$("#form-canal").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const f = ev.target, msg = $("#nc-msg"), bt = $("#nc-criar");
+  const fd = new FormData(f), corpo = {};
+  for (const [k, v] of fd.entries()) if (k !== "redes" && k !== "estilos" && k !== "publicar") corpo[k] = v;
+  corpo.redes = fd.getAll("redes"); corpo.estilos = fd.getAll("estilos"); corpo.publicar = fd.has("publicar");
+  bt.disabled = true; msg.className = "msg"; msg.textContent = "Criando…";
+  try {
+    const r = await fetch("canais", { method: "POST", headers: { "X-Fabrica": "canal", "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
+    const j = await r.json().catch(() => ({ ok: false, mensagem: "HTTP " + r.status }));
+    msg.className = "msg " + (j.ok ? "ok" : "ruim"); msg.textContent = j.mensagem;
+    if (j.ok) { f.reset(); busca(); }
+  } catch (e) {
+    msg.className = "msg ruim"; msg.textContent = "servidor local fora do ar";
+  }
+  bt.disabled = false;
+});
+function aplicaRobos(robos) {
+  (robos || []).forEach((r, i) => { if (ETAPAS[i]) { ETAPAS[i].robo = r.apelido; ETAPAS[i].faz = r.funcao; } });
+}
+/* ---------- editor de ficha */
+let editando = null;
+async function postFicha(cid, acao, corpo) {
+  const r = await fetch("ficha?canal=" + encodeURIComponent(cid) + "&acao=" + acao,
+    { method: "POST", headers: { "X-Fabrica": "canal", "Content-Type": "application/json" }, body: corpo || "{}" });
+  return r.json().catch(() => ({ ok: false, mensagem: "HTTP " + r.status }));
+}
+async function abreEditor(cid) {
+  const msg = $("#ed-msg");
+  editando = cid; msg.className = "msg"; msg.textContent = "";
+  $("#ed-titulo").textContent = "Ficha do canal " + cid;
+  const j = await postFicha(cid, "ler");
+  if (!j.ok) { msg.className = "msg ruim"; msg.textContent = j.mensagem; $("#ed-json").value = ""; }
+  else $("#ed-json").value = JSON.stringify(j.ficha, null, 2);
+  $("#editor").showModal();
+}
+$("#ed-fechar").addEventListener("click", () => $("#editor").close());
+$("#ed-salvar").addEventListener("click", async () => {
+  const msg = $("#ed-msg"), txt = $("#ed-json").value;
+  try { JSON.parse(txt); } catch (e) { msg.className = "msg ruim"; msg.textContent = "JSON inválido: " + e.message; return; }
+  const j = await postFicha(editando, "salvar", txt);
+  msg.className = "msg " + (j.ok ? "ok" : "ruim"); msg.textContent = j.mensagem;
+  if (j.ok) busca();
+});
+$("#andares").addEventListener("click", e => {
+  const b = e.target.closest("[data-editar]");
+  if (b) abreEditor(b.dataset.editar);
+});
+function desenha(d) {
+  aplicaRobos(d.robos);
+  const avisos = (d.erros_canais || []).map(e => `<div class="aviso-erro">Perfil de canal com problema: ${esc(e)}</div>`).join("");
+  $("#andares").innerHTML = avisos + painelCaixa(d) + d.canais.map(andar).join("");
+  montaForm(d.novo_canal);
+  contagens();
+}
+function contagens() {
+  document.querySelectorAll("[data-conta]").forEach(el => {
+    const s = (new Date(el.dataset.conta) - Date.now()) / 1000;
+    el.textContent = s > 0 ? "em " + duracao(s) : "começando";
+  });
+}
+$("#atualizar").addEventListener("click", busca);
+busca();
+setInterval(busca, 20000);
+setInterval(contagens, 1000);
+</script>
+</body>
+</html>

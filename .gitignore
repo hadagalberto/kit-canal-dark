@@ -1,0 +1,12 @@
+.env
+dados/
+saida/*
+!saida/.gitkeep
+segredos/
+video/node_modules/
+video/out/
+__pycache__/
+*.pyc
+*.session.json
+client_secret*.json
+token.json

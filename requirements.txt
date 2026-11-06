@@ -1,0 +1,6 @@
+# Pipeline (motor api) e agendador
+anthropic==1.15.0
+croniter==6.2.4
+# Publicador do YouTube (opcional, só usado com REDES=youtube)
+google-api-python-client==2.201.0
+google-auth-oauthlib==1.5.0

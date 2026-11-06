@@ -1,0 +1,438 @@
+{
+  "id": "2026-10-09-claude-haiku-5-5",
+  "date": "07.10.2026",
+  "dateLong": "07 DE OUTUBRO DE 2026",
+  "style": "cinetica",
+  "sources": [
+    {
+      "label": "anthropic.com",
+      "url": "https://www.anthropic.com/claude-haiku-5-5"
+    },
+    {
+      "label": "Claude Platform release notes",
+      "url": "https://platform.claude.com/docs/en/release-notes/overview"
+    },
+    {
+      "label": "9to5Mac",
+      "url": "https://9to5mac.com/2026/10/07/anthropic-upgrades-claude-with-new-haiku-5-5-model-details-here/"
+    },
+    {
+      "label": "Anúncio do Haiku 4.5 (preço anterior)",
+      "url": "https://www.anthropic.com/news/claude-haiku-4-5"
+    }
+  ],
+  "voice": {
+    "tempo": 1.12,
+    "stability": 0.5,
+    "similarity": 0.8
+  },
+  "beats": [
+    {
+      "type": "hero",
+      "voice": {
+        "id": "hook",
+        "text": "[excited] A Anthropic lançou o Claude Haiku cinco ponto cinco."
+      },
+      "caption": {
+        "kicker": "ANTHROPIC · 7 OUT",
+        "text": "O Haiku\nvirou 5.5."
+      },
+      "kicker": "Anthropic · 7 out 2026",
+      "title": "HAIKU",
+      "highlight": "5.5",
+      "chips": [
+        "1M de contexto",
+        "128k de saída"
+      ]
+    },
+    {
+      "type": "statement",
+      "voice": {
+        "id": "small",
+        "text": "[confident] É o menor e o mais rápido que a empresa já fez."
+      },
+      "caption": {
+        "kicker": "SUBSTITUI O HAIKU 4.5",
+        "text": "O menor.\nO mais rápido."
+      },
+      "kicker": "No lugar do Haiku 4.5",
+      "text": "O mais rápido da Anthropic"
+    },
+    {
+      "type": "compare",
+      "voice": {
+        "id": "price",
+        "text": "[measured] Dez centavos de dólar por milhão de tokens de entrada. [impressed] Em média, setenta e cinco por cento a menos."
+      },
+      "caption": {
+        "kicker": "CUSTO MÉDIO VS HAIKU 4.5",
+        "text": "75% mais\nbarato."
+      },
+      "label": "Por milhão de tokens · pedidos até 100 mil",
+      "items": [
+        {
+          "name": "Entrada",
+          "before": "US$ 1,00",
+          "after": "US$ 0,10"
+        },
+        {
+          "name": "Saída",
+          "before": "US$ 5,00",
+          "after": "US$ 0,50"
+        }
+      ],
+      "stamp": {
+        "value": "−75%",
+        "label": "em média vs Haiku 4.5"
+      }
+    },
+    {
+      "type": "statement",
+      "voice": {
+        "id": "computer",
+        "text": "[curious] E ficou bem melhor em operar o computador."
+      },
+      "caption": {
+        "kicker": "USO DO COMPUTADOR",
+        "text": "Ele opera\na máquina."
+      },
+      "kicker": "Uso do computador",
+      "text": "Clica, digita e navega"
+    },
+    {
+      "type": "bars",
+      "voice": {
+        "id": "score",
+        "text": "[excited] Num teste desse tipo, saltou de quinze pra setenta e dois por cento."
+      },
+      "caption": {
+        "kicker": "OSWORLD 2.1",
+        "text": "De 15,7%\npara 72,4%."
+      },
+      "label": "OSWorld 2.1 · tarefas reais no computador",
+      "max": 100,
+      "items": [
+        {
+          "name": "Haiku 4.5",
+          "value": 15.7,
+          "display": "15,7%"
+        },
+        {
+          "name": "Haiku 5.5",
+          "value": 72.4,
+          "display": "72,4%",
+          "highlight": true
+        }
+      ]
+    },
+    {
+      "type": "compare",
+      "voice": {
+        "id": "sonnet",
+        "text": "[matter-of-fact] No Sonnet cinco ponto cinco, a leitura de cache caiu pela metade."
+      },
+      "caption": {
+        "kicker": "SONNET 5.5 · LEITURA DE CACHE",
+        "text": "Pela\nmetade."
+      },
+      "label": "Sonnet 5.5 · por milhão de tokens",
+      "items": [
+        {
+          "name": "Leitura de cache",
+          "before": "US$ 0,20",
+          "after": "US$ 0,10"
+        }
+      ],
+      "stamp": {
+        "value": "÷2",
+        "label": "pela metade"
+      },
+      "note": "~20% mais barato em trabalho de agente"
+    },
+    {
+      "type": "end",
+      "voice": {
+        "id": "end",
+        "text": "[warm] Já está liberado na API e nas principais nuvens."
+      },
+      "caption": {
+        "kicker": "DISPONÍVEL",
+        "text": "Já liberado."
+      },
+      "where": "API da Anthropic, AWS, Google Cloud e Microsoft",
+      "source": "Fonte: anthropic.com e 9to5Mac · 7 out 2026"
+    }
+  ],
+  "brand": {
+    "name": "Canal Exemplo",
+    "handle": "@canal.exemplo",
+    "short": "CANAL EXEMPLO",
+    "tagline": "Notícias todos os dias"
+  },
+  "timing": {
+    "fps": 30,
+    "total": 947,
+    "lines": [
+      {
+        "id": "hook",
+        "at": 4,
+        "end": 101
+      },
+      {
+        "id": "small",
+        "at": 115,
+        "end": 206
+      },
+      {
+        "id": "price",
+        "at": 220,
+        "end": 418
+      },
+      {
+        "id": "computer",
+        "at": 432,
+        "end": 510
+      },
+      {
+        "id": "score",
+        "at": 524,
+        "end": 649
+      },
+      {
+        "id": "sonnet",
+        "at": 663,
+        "end": 782
+      },
+      {
+        "id": "end",
+        "at": 796,
+        "end": 902
+      }
+    ],
+    "beats": [
+      {
+        "from": 0,
+        "to": 111,
+        "phases": [
+          {
+            "kind": "main",
+            "from": 0,
+            "to": 111,
+            "marks": {
+              "title": 2,
+              "highlight": 13,
+              "chips": 40
+            }
+          }
+        ]
+      },
+      {
+        "from": 111,
+        "to": 216,
+        "phases": [
+          {
+            "kind": "main",
+            "from": 111,
+            "to": 216,
+            "marks": {
+              "text": 117
+            }
+          }
+        ]
+      },
+      {
+        "from": 216,
+        "to": 428,
+        "phases": [
+          {
+            "kind": "item",
+            "index": 0,
+            "from": 216,
+            "to": 287,
+            "marks": {
+              "name": 218,
+              "before": 222,
+              "strike": 234,
+              "after": 242
+            }
+          },
+          {
+            "kind": "item",
+            "index": 1,
+            "from": 287,
+            "to": 357,
+            "marks": {
+              "name": 289,
+              "before": 293,
+              "strike": 305,
+              "after": 313
+            }
+          },
+          {
+            "kind": "stamp",
+            "from": 357,
+            "to": 428,
+            "marks": {
+              "stamp": 361,
+              "label": 373
+            }
+          }
+        ]
+      },
+      {
+        "from": 428,
+        "to": 520,
+        "phases": [
+          {
+            "kind": "main",
+            "from": 428,
+            "to": 520,
+            "marks": {
+              "text": 434
+            }
+          }
+        ]
+      },
+      {
+        "from": 520,
+        "to": 659,
+        "phases": [
+          {
+            "kind": "main",
+            "from": 520,
+            "to": 659,
+            "marks": {
+              "label": 522,
+              "countFrom": 530,
+              "countTo": 566
+            }
+          }
+        ]
+      },
+      {
+        "from": 659,
+        "to": 792,
+        "phases": [
+          {
+            "kind": "item",
+            "index": 0,
+            "from": 659,
+            "to": 726,
+            "marks": {
+              "name": 661,
+              "before": 664,
+              "strike": 677,
+              "after": 685
+            }
+          },
+          {
+            "kind": "stamp",
+            "from": 726,
+            "to": 792,
+            "marks": {
+              "stamp": 730,
+              "label": 742
+            }
+          }
+        ]
+      },
+      {
+        "from": 792,
+        "to": 947,
+        "phases": [
+          {
+            "kind": "main",
+            "from": 792,
+            "to": 947,
+            "marks": {
+              "brand": 794,
+              "info": 816
+            }
+          }
+        ]
+      }
+    ],
+    "events": {
+      "hits": [
+        {
+          "at": 2,
+          "power": 22
+        },
+        {
+          "at": 13,
+          "power": 30
+        },
+        {
+          "at": 117,
+          "power": 12
+        },
+        {
+          "at": 242,
+          "power": 22
+        },
+        {
+          "at": 313,
+          "power": 22
+        },
+        {
+          "at": 361,
+          "power": 34
+        },
+        {
+          "at": 434,
+          "power": 12
+        },
+        {
+          "at": 566,
+          "power": 30
+        },
+        {
+          "at": 685,
+          "power": 22
+        },
+        {
+          "at": 730,
+          "power": 34
+        },
+        {
+          "at": 794,
+          "power": 16
+        }
+      ],
+      "strikes": [
+        234,
+        305,
+        677
+      ],
+      "ticks": [
+        530,
+        533,
+        536,
+        539,
+        542,
+        545,
+        548,
+        551,
+        554,
+        557,
+        560,
+        563
+      ],
+      "pops": [
+        40
+      ],
+      "cuts": [
+        111,
+        216,
+        287,
+        357,
+        428,
+        520,
+        659,
+        726,
+        792
+      ],
+      "sting": 794
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "canal-dark-kit-video",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "still": "remotion still src/index.ts NewsReel",
+    "audio": "node scripts/make-audio.mjs",
+    "voice": "node scripts/make-voice.mjs",
+    "render": "node scripts/render-film.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.432",
+    "@remotion/google-fonts": "^4.0.432",
+    "@remotion/transitions": "^4.0.432",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.432"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.8.0"
+  }
+}

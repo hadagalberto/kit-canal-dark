@@ -1,0 +1,65 @@
+{
+  "id": "2026-10-09-gemini-colega",
+  "date": "08.10.2026",
+  "dateLong": "08 DE OUTUBRO DE 2026",
+  "style": "vidro",
+  "sources": [
+    { "label": "Blog do Google Cloud", "url": "https://cloud.google.com/blog" },
+    { "label": "TechCrunch", "url": "https://techcrunch.com" }
+  ],
+  "voice": { "tempo": 1, "stability": 0.5, "similarity": 0.8 },
+  "beats": [
+    {
+      "type": "hero",
+      "voice": { "id": "hook", "text": "A Google criou um colega que é inteligência artificial." },
+      "caption": { "kicker": "GOOGLE CLOUD · 8 OUT", "text": "O Gemini\nganhou e-mail." },
+      "kicker": "Gemini at Work · 8 out 2026",
+      "title": "GEMINI",
+      "highlight": "COLEGA",
+      "chips": ["Conta própria no Workspace", "Preview privado"]
+    },
+    {
+      "type": "list",
+      "voice": { "id": "account", "text": "A conta é dele. E-mail, calendário e Drive, no diretório da empresa, com o acesso que o time liberar." },
+      "caption": { "kicker": "DIRETÓRIO DA EMPRESA", "text": "Uma conta.\nComo um colega." },
+      "label": "A conta é do agente",
+      "items": ["E-mail", "Calendário", "Drive", "Lugar no diretório"]
+    },
+    {
+      "type": "statement",
+      "voice": { "id": "team", "text": "O time manda trabalho pra essa conta." },
+      "caption": { "kicker": "NO DIA A DIA", "text": "O time manda\ntrabalho." },
+      "kicker": "Como se usa",
+      "text": "O time manda trabalho para a conta"
+    },
+    {
+      "type": "list",
+      "voice": { "id": "brief", "text": "Você não manda o passo a passo. Descreve o objetivo, e o Gemini monta as tarefas." },
+      "caption": { "kicker": "VOCÊ ESCREVE O FIM", "text": "Você dá\no objetivo." },
+      "label": "Sem passo a passo",
+      "items": ["Você descreve o objetivo", "O Gemini monta as tarefas"]
+    },
+    {
+      "type": "statement",
+      "voice": { "id": "does", "text": "E ele executa sozinho." },
+      "caption": { "kicker": "ELE MONTA O CAMINHO", "text": "E executa\nsozinho." },
+      "kicker": "Execução",
+      "text": "Executa sozinho"
+    },
+    {
+      "type": "stat",
+      "voice": { "id": "cloud", "text": "Na nuvem da Google, por horas ou dias, mesmo com o notebook fechado." },
+      "caption": { "kicker": "NA NUVEM", "text": "Você sai.\nEle continua." },
+      "value": "HORAS OU DIAS",
+      "label": "rodando na nuvem da Google",
+      "note": "mesmo com o notebook fechado"
+    },
+    {
+      "type": "end",
+      "voice": { "id": "end", "text": "Por enquanto não está liberado. Só empresas escolhidas." },
+      "caption": { "kicker": "PREVIEW PRIVADO", "text": "Só empresas\nescolhidas." },
+      "where": "Preview privado, só para empresas escolhidas",
+      "source": "Fonte: blog do Google Cloud e TechCrunch · 8 out 2026"
+    }
+  ]
+}
